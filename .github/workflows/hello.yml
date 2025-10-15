@@ -1,21 +1,16 @@
-name: Node CI Demo
+name: GitHub Actions Practice
 
 on: [push, pull_request]
 
 jobs:
-  build:
+  demo:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
+      - name: Print current folder
+        run: ls -la
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run tests
-        run: npm test || echo "No tests yet"
+      - name: Say Hello
+        run: echo "✅ Workflow is running successfully!"
