@@ -1,0 +1,60 @@
+name: CI → Build & Upload to S3 (self-hosted)
+
+# Triggers: push to main or manual dispatch
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  # workflow-level env fallback (can be overridden by vars/secrets)
+  OUTPUT_FILE: build-output.txt
+
+jobs:
+  build-and-upload:
+    # Run on a self-hosted runner that you registered with tag "prod-runner"
+    runs-on: [self-hosted, linux, x64, prod-runner]
+    # require the repo variable BUCKET_NAME (see below)
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show runner info (debug)
+        run: |
+          echo "Runner: $RUNNER_NAME"
+          uname -a
+          lsb_release -a || true
+          echo "Workspace: $GITHUB_WORKSPACE"
+
+      - name: Use repository variable and prepare file
+        # Use repository variable with ${{ vars.NAME }} syntax
+        run: |
+          echo "Using bucket: ${{ vars.BUCKET_NAME }}"   # prints repo variable
+          echo "Build time: $(date -u)" > ${{ env.OUTPUT_FILE }}
+          echo "Repository: $GITHUB_REPOSITORY" >> ${{ env.OUTPUT_FILE }}
+          echo "Commit: $GITHUB_SHA" >> ${{ env.OUTPUT_FILE }}
+        env:
+          OUTPUT_FILE: ${{ env.OUTPUT_FILE }}
+
+      - name: Configure AWS credentials (from secrets)
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}   # repository variable for region
+
+      - name: Verify AWS identity (debug)
+        run: |
+          aws sts get-caller-identity
+
+      - name: Upload generated file to S3
+        run: |
+          aws s3 cp ${OUTPUT_FILE} s3://${{ vars.BUCKET_NAME }}/artifacts/${GITHUB_RUN_ID}/$OUTPUT_FILE --acl private
+        env:
+          OUTPUT_FILE: ${{ env.OUTPUT_FILE }}
+
+      - name: Show S3 URL
+        run: echo "Uploaded to: s3://${{ vars.BUCKET_NAME }}/artifacts/${GITHUB_RUN_ID}/${OUTPUT_FILE}"
