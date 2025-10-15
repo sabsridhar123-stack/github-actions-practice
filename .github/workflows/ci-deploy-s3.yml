@@ -28,23 +28,4 @@ jobs:
         run: |
           echo "Using bucket: ${{ vars.BUCKET_NAME }}"
           echo "Build time: $(date -u)" > "$OUTPUT_FILE"
-          echo "Repository: $GITHUB_REPOSITORY" >> "$OUTPUT_FILE"
-          echo "Commit: $GITHUB_SHA" >> "$OUTPUT_FILE"
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v5
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION }}
-
-      - name: Verify AWS identity
-        run: aws sts get-caller-identity
-
-      - name: Upload to S3
-        run: |
-          echo "Uploading $OUTPUT_FILE to s3://${{ vars.BUCKET_NAME }}/artifacts/${{ github.run_id }}/$OUTPUT_FILE"
-          aws s3 cp "$OUTPUT_FILE" "s3://${{ vars.BUCKET_NAME }}/artifacts/${{ github.run_id }}/$OUTPUT_FILE" --acl private
-
-      - name: Show S3 URL
-        run: echo "✅ Uploaded to: s3://${{ vars.BUCKET_NAME }}/artifacts/${{ github.run_id }}/$OUTPUT_FILE"
+          echo "Repository: $
