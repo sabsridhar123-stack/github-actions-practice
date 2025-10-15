@@ -1,44 +1,36 @@
 name: CI → Build & Upload to S3 (GitHub-hosted)
 
-# 🚀 Trigger on push to main, or run manually
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
 
 env:
-  # Default environment variable (you can override with repo vars)
   OUTPUT_FILE: build-output.txt
 
 jobs:
   build-and-upload:
-    # 🧠 Use GitHub’s hosted Ubuntu runner
     runs-on: ubuntu-latest
-
     permissions:
       contents: read
 
     steps:
-      # 1️⃣ Checkout your repo code
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Show system info (debug / learning)
       - name: Show runner info
         run: |
           echo "Runner: $RUNNER_NAME"
           uname -a
           echo "Workspace: $GITHUB_WORKSPACE"
 
-      # 3️⃣ Create a sample build file
       - name: Prepare build output
         run: |
           echo "Using bucket: ${{ vars.BUCKET_NAME }}"
-          echo "Build time: $(date -u)" > ${{ env.OUTPUT_FILE }}
-          echo "Repository: $GITHUB_REPOSITORY" >> ${{ env.OUTPUT_FILE }}
-          echo "Commit: $GITHUB_SHA" >> ${{ env.OUTPUT_FILE }}
+          echo "Build time: $(date -u)" > "$OUTPUT_FILE"
+          echo "Repository: $GITHUB_REPOSITORY" >> "$OUTPUT_FILE"
+          echo "Commit: $GITHUB_SHA" >> "$OUTPUT_FILE"
 
-      # 4️⃣ Configure AWS credentials (from your repo secrets)
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
         with:
@@ -46,15 +38,13 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      # 5️⃣ (Optional) Verify AWS identity for debugging
       - name: Verify AWS identity
         run: aws sts get-caller-identity
 
-      # 6️⃣ Upload build artifact to S3
       - name: Upload to S3
         run: |
-          aws s3 cp ${{ env.OUTPUT_FILE }} s3://${{ vars.BUCKET_NAME }}/artifacts/${GITHUB_RUN_ID}/$OUTPUT_FILE --acl private
+          echo "Uploading $OUTPUT_FILE to s3://${{ vars.BUCKET_NAME }}/artifacts/${{ github.run_id }}/$OUTPUT_FILE"
+          aws s3 cp "$OUTPUT_FILE" "s3://${{ vars.BUCKET_NAME }}/artifacts/${{ github.run_id }}/$OUTPUT_FILE" --acl private
 
-      # 7️⃣ Print success message
       - name: Show S3 URL
-        run: echo "✅ Uploaded to: s3://${{ vars.BUCKET_NAME }}/artifacts/${GITHUB_RUN_ID}/${OUTPUT_FILE}"
+        run: echo "✅ Uploaded to: s3://${{ vars.BUCKET_NAME }}/artifacts/${{ github.run_id }}/$OUTPUT_FILE"
