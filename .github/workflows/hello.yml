@@ -13,4 +13,4 @@ jobs:
         run: ls -la
 
       - name: Say Hello
-        run: echo "✅ Workflow is running successfully!"
+        run: echo "✅ Workflow is running successfully!${{ secrets.API_KEY }}"
