@@ -53,4 +53,4 @@ jobs:
         env:
           BUCKET: ${{ vars.BUCKET_NAME }}
           RUN_ID: ${{ github.run_id }}
-        run: echo "✅ Uploaded to: s3://$BUCKET/artifacts/$RUN_ID/$OUTPUT_FILE"
+        run: echo "✅ Uploaded to:s3://$BUCKET/artifacts/$RUN_ID/$OUTPUT_FILE"
